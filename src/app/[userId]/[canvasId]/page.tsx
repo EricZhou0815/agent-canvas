@@ -20,7 +20,7 @@ export default function Page({ params }: { params: { userId: string; canvasId: s
     }
   }, [params.userId, router])
 
-  if (!authorized) return <div className="min-h-screen bg-background flex items-center justify-center"><p className="text-muted-foreground animate-pulse">Verifying...</p></div>
+  if (!authorized) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-6 h-6 border-2 border-foreground border-t-transparent rounded-full animate-spin" /></div>
 
   return <CanvasClient userId={params.userId} canvasId={params.canvasId} />
 }

@@ -11,14 +11,15 @@ interface Slide { type: string; title: string; data: any }
 export default function CanvasClient({ userId, canvasId }: { userId: string; canvasId: string }) {
   const [slides, setSlides] = useState<Slide[]>([])
   const [index, setIndex] = useState(0)
+  const [loading, setLoading] = useState(true)
   const load = async () => {
     const r = await fetch(`/api/canvas?userId=${userId}&canvasId=${canvasId}`)
     const d = await r.json()
     if (d.slides) setSlides(d.slides)
   }
-  useEffect(() => { load(); const t = setInterval(load, 5000); return () => clearInterval(t) }, [userId, canvasId])
+  useEffect(() => { load().then(() => setLoading(false)); const t = setInterval(() => load(), 5000); return () => clearInterval(t) }, [userId, canvasId])
   const s = slides[index]
-  if (!s) return <div className="min-h-screen bg-background flex items-center justify-center"><p className="text-muted-foreground animate-pulse">加载中...</p></div>
+  if (!s && loading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-6 h-6 border-2 border-foreground border-t-transparent rounded-full animate-spin" /></div>
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center justify-between px-6 py-3 border-b">

@@ -9,11 +9,13 @@ export default function LoginPage() {
   const [username, setUsername] = useState('')
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [msg, setMsg] = useState('')
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setMsg('')
+    setLoading(true)
     const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register'
     const body: any = { email, password }
     if (mode === 'register') {
@@ -27,6 +29,7 @@ export default function LoginPage() {
       body: JSON.stringify(body),
     })
     const data = await res.json()
+    setLoading(false)
     if (!res.ok) return setMsg(data.error)
 
     if (mode === 'register') {
@@ -56,8 +59,9 @@ export default function LoginPage() {
               onChange={e => setUsername(e.target.value)} />
           </>
         )}
-        <button className="w-full rounded-lg bg-foreground text-background py-2 text-sm font-medium" type="submit">
-          {mode === 'login' ? 'Login' : 'Register'}
+        <button className="w-full rounded-lg bg-foreground text-background py-2 text-sm font-medium flex items-center justify-center gap-2" type="submit" disabled={loading}>
+          {loading ? <span className="inline-block w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin" /> : null}
+          {loading ? 'Please wait...' : mode === 'login' ? 'Login' : 'Register'}
         </button>
         <p className="text-xs text-center text-muted-foreground">
           <button type="button" onClick={() => setMode(m => m === 'login' ? 'register' : 'login')} className="underline">

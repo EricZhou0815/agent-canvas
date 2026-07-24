@@ -7,6 +7,7 @@ export default function DashboardClient({ userId }: { userId: string }) {
   const [user, setUser] = useState<any>(null)
   const [canvases, setCanvases] = useState<any[]>([])
   const [token, setToken] = useState('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('canvas_user_id')
@@ -19,6 +20,7 @@ export default function DashboardClient({ userId }: { userId: string }) {
       .then(r => r.json())
       .then(d => { setUser(d.user); setCanvases(d.canvases || []) })
       .catch(() => {})
+      .finally(() => setLoading(false))
   }, [userId, router])
 
   return (
@@ -28,6 +30,11 @@ export default function DashboardClient({ userId }: { userId: string }) {
         <span className="text-sm text-muted-foreground">{userId.slice(0, 8)}...</span>
       </header>
       <main className="max-w-3xl mx-auto p-6 space-y-8">
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-6 h-6 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (<>
         <section>
           <h2 className="text-lg font-semibold mb-3">Profile</h2>
           <div className="bg-muted rounded-lg p-4 space-y-2 text-sm">
@@ -71,6 +78,7 @@ export default function DashboardClient({ userId }: { userId: string }) {
             </div>
           )}
         </section>
+        </>)}
       </main>
     </div>
   )
