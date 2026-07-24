@@ -52,7 +52,7 @@ export default function CanvasClient({ userId, canvasId }: { userId: string; can
         )}
       </header>
       <main className="p-6 max-w-4xl mx-auto">
-        {s.type === 'dashboard' && <Dashboard data={s.data} title={s.title} />}
+        {s.type === 'dashboard' && <Dashboard data={s.data} title={s.title} userId={userId} canvasId={canvasId} />}
         {s.type === 'form' && <FormSlide data={s.data} title={s.title} />}
         {s.type === 'timeline' && <Timeline data={s.data} title={s.title} />}
         {s.type === 'page' && <PageSlide data={s.data} title={s.title} />}
@@ -61,7 +61,7 @@ export default function CanvasClient({ userId, canvasId }: { userId: string; can
   )
 }
 
-function Dashboard({ data, title }: { data: any; title: string }) {
+function Dashboard({ data, title, userId, canvasId }: { data: any; title: string; userId: string; canvasId: string }) {
   const tasks = data?.tasks || []; const battery = data?.battery; const cols = data?.collections || []
   const [doneTasks, setDoneTasks] = useState<Set<number>>(new Set())
   return (
@@ -85,7 +85,16 @@ function Dashboard({ data, title }: { data: any; title: string }) {
           <Card key={i} className={t.status === 'DONE' || doneTasks.has(i) ? 'opacity-50' : ''}>
             <CardContent className="p-4 flex items-center gap-3">
               <Checkbox checked={t.status === 'DONE' || doneTasks.has(i)}
-                onCheckedChange={() => setDoneTasks(s => { const n = new Set(s); n.has(i) ? n.delete(i) : n.add(i); return n })}
+                onCheckedChange={() => {
+                  const newDone = new Set(doneTasks)
+                  newDone.has(i) ? newDone.delete(i) : newDone.add(i)
+                  setDoneTasks(newDone)
+                  fetch('/api/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'toggle_task', payload: { taskIndex: i, title: t.title, done: !doneTasks.has(i) }, userId, canvasId })
+                  }).catch(() => {})
+                }}
               />
               <span className={`flex-1 text-sm ${t.status === 'DONE' || doneTasks.has(i) ? 'line-through text-muted-foreground' : ''}`}>{t.title}</span>
               {t.priority === 'URGENT' && <Badge variant="destructive">紧急</Badge>}
