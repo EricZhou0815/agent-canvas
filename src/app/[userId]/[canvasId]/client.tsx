@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -11,15 +12,28 @@ import remarkGfm from 'remark-gfm'
 interface Slide { type: string; title: string; data: any }
 
 export default function CanvasClient({ userId, canvasId }: { userId: string; canvasId: string }) {
+  const router = useRouter()
   const [slides, setSlides] = useState<Slide[]>([])
   const [index, setIndex] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [authorized, setAuthorized] = useState(false)
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem('canvas_user_id')
+    const token = localStorage.getItem('canvas_token')
+    if (!storedUserId || !token || storedUserId !== userId) {
+      router.push('/login')
+    } else {
+      setAuthorized(true)
+    }
+  }, [userId, router])
+
   const load = async () => {
     const r = await fetch(`/api/canvas?userId=${userId}&canvasId=${canvasId}`)
     const d = await r.json()
     if (d.slides) setSlides(d.slides)
   }
-  useEffect(() => { load().then(() => setLoading(false)); const t = setInterval(() => load(), 5000); return () => clearInterval(t) }, [userId, canvasId])
+  useEffect(() => { if (authorized) { load().then(() => setLoading(false)); const t = setInterval(() => load(), 5000); return () => clearInterval(t) } }, [authorized, userId, canvasId])
   const s = slides[index]
   if (!s && loading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-6 h-6 border-2 border-foreground border-t-transparent rounded-full animate-spin" /></div>
   return (
