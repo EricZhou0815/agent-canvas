@@ -9,6 +9,7 @@ export default function DashboardClient({ userId }: { userId: string }) {
   const [token, setToken] = useState('')
   const [showToken, setShowToken] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('canvas_user_id')
@@ -63,9 +64,9 @@ export default function DashboardClient({ userId }: { userId: string }) {
               <button onClick={() => setShowToken(!showToken)}
                 className="px-3 py-2 rounded bg-muted hover:bg-muted/80 text-xs shrink-0"
               >{showToken ? 'Hide' : 'Show'}</button>
-              <button onClick={() => navigator.clipboard.writeText(token)}
+              <button onClick={() => { navigator.clipboard.writeText(token); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
                 className="px-3 py-2 rounded bg-foreground text-background text-xs shrink-0"
-              >Copy</button>
+              >{copied ? 'Copied!' : 'Copy'}</button>
             </div>
           </div>
         </section>
