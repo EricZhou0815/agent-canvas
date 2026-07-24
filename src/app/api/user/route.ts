@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   const supabase = createClient(supabaseUrl, supabaseKey)
 
   const { data: user } = await supabase.from('canvas_users')
-    .select('id, email, username')
+    .select('id, email, username, webhook_url')
     .eq('id', userId)
     .single()
 
@@ -31,5 +31,5 @@ export async function GET(req: NextRequest) {
     updatedAt: c.updated_at,
   }))
 
-  return NextResponse.json({ user: { id: user.id, email: user.email, username: user.username }, canvases: canvasList })
+  return NextResponse.json({ user: { id: user.id, email: user.email, username: user.username, webhookUrl: user.webhook_url }, canvases: canvasList })
 }

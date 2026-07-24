@@ -1,42 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
-// Webhook URL — update this when Cloudflare tunnel restarts
-// In production, store this in Vercel KV or Supabase
-const WEBHOOK_URL = process.env.AGENT_WEBHOOK_URL || 'https://paying-winners-friendly-holders.trycloudflare.com'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://yuwluwwsbpeolqxyvbtu.supabase.co'
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+const supabase = createClient(supabaseUrl, supabaseKey)
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { action, payload, userId, canvasId } = body
+    const { action, payload, userId, canvasId, webhookUrl } = body
 
     if (!action) {
       return NextResponse.json({ error: 'Missing action' }, { status: 400 })
     }
 
-    // Forward to local agent via webhook (await to prevent cancellation)
-    const webhookPayload = {
-      action,
-      payload: payload || {},
-      userId: userId || 'unknown',
-      canvasId: canvasId || 'unknown',
-      timestamp: new Date().toISOString(),
+    // Determine webhook URL: from request, or from DB
+    let targetUrl = webhookUrl
+    if (!targetUrl && userId) {
+      const { data: user } = await supabase.from('canvas_users')
+        .select('webhook_url')
+        .eq('id', userId)
+        .single()
+      if (user?.webhook_url) targetUrl = user.webhook_url
     }
 
-    try {
-      const webhookRes = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(webhookPayload),
-      })
-      if (!webhookRes.ok) {
-        console.error(`Webhook returned ${webhookRes.status}`)
-      }
-    } catch (err: any) {
-      console.error('Webhook failed:', err.message)
+    if (!targetUrl) {
+      return NextResponse.json({ ok: true, message: 'No webhook configured. Set one in your Dashboard.' })
+    }
+
+    // Forward to local agent
+    const payload2 = { action, payload: payload || {}, userId: userId || 'unknown', canvasId: canvasId || 'unknown', timestamp: new Date().toISOString() }
+
+    const res = await fetch(targetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload2),
+    })
+
+    if (!res.ok) {
+      return NextResponse.json({ error: `Webhook returned ${res.status}` }, { status: 502 })
     }
 
     return NextResponse.json({ ok: true, message: 'Action forwarded to agent' })
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

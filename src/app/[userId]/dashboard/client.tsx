@@ -10,6 +10,9 @@ export default function DashboardClient({ userId }: { userId: string }) {
   const [showToken, setShowToken] = useState(false)
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [webhookInput, setWebhookInput] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [savedMsg, setSavedMsg] = useState('')
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('canvas_user_id')
@@ -20,10 +23,26 @@ export default function DashboardClient({ userId }: { userId: string }) {
     setToken(storedToken)
     fetch(`/api/user?userId=${userId}`)
       .then(r => r.json())
-      .then(d => { setUser(d.user); setCanvases(d.canvases || []) })
+      .then(d => { setUser(d.user); setCanvases(d.canvases || []); if (d.user?.webhookUrl) setWebhookInput(d.user.webhookUrl) })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [userId, router])
+
+  async function saveWebhook() {
+    setSaving(true)
+    setSavedMsg('')
+    try {
+      const r = await fetch('/api/user/webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, webhookUrl: webhookInput || null }),
+      })
+      if (r.ok) setSavedMsg('✅ Webhook URL saved')
+      else setSavedMsg('❌ Failed to save')
+    } catch { setSavedMsg('❌ Error') }
+    setSaving(false)
+    setTimeout(() => setSavedMsg(''), 3000)
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -68,6 +87,28 @@ export default function DashboardClient({ userId }: { userId: string }) {
                 className="px-3 py-2 rounded bg-foreground text-background text-xs shrink-0"
               >{copied ? 'Copied!' : 'Copy'}</button>
             </div>
+          </div>
+        </section>
+
+        {/* Webhook */}
+        <section>
+          <h2 className="text-lg font-semibold mb-3">Webhook (Agent Callback)</h2>
+          <div className="bg-muted rounded-lg p-4">
+            <p className="text-xs text-muted-foreground mb-2">
+              When you interact with a Canvas (click, submit), actions are forwarded to this URL.
+              Run a local webhook listener and expose it via Cloudflare Tunnel.
+            </p>
+            <div className="flex gap-2">
+              <input className="flex-1 bg-background rounded px-3 py-2 text-xs border"
+                placeholder="https://xxx.trycloudflare.com"
+                value={webhookInput}
+                onChange={e => setWebhookInput(e.target.value)}
+              />
+              <button onClick={saveWebhook}
+                className="px-3 py-2 rounded bg-foreground text-background text-xs shrink-0"
+              >{saving ? 'Saving...' : 'Save'}</button>
+            </div>
+            {savedMsg && <p className="text-xs text-green-500 mt-1">{savedMsg}</p>}
           </div>
         </section>
         <section>
