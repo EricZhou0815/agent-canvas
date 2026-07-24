@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing action' }, { status: 400 })
     }
 
-    // Forward to local agent via webhook
+    // Forward to local agent via webhook (await to prevent cancellation)
     const webhookPayload = {
       action,
       payload: payload || {},
@@ -22,12 +22,18 @@ export async function POST(req: NextRequest) {
       timestamp: new Date().toISOString(),
     }
 
-    // Fire webhook (fire-and-forget — don't block response)
-    fetch(WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(webhookPayload),
-    }).catch(err => console.error('Webhook failed:', err.message))
+    try {
+      const webhookRes = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(webhookPayload),
+      })
+      if (!webhookRes.ok) {
+        console.error(`Webhook returned ${webhookRes.status}`)
+      }
+    } catch (err: any) {
+      console.error('Webhook failed:', err.message)
+    }
 
     return NextResponse.json({ ok: true, message: 'Action forwarded to agent' })
   } catch {
