@@ -9,7 +9,6 @@ export default function Home() {
       </header>
       <main className="max-w-4xl mx-auto p-6 space-y-10">
 
-        {/* English */}
         <section>
           <h2 className="text-lg font-semibold mb-1">What is AgentCanvas?</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
@@ -22,9 +21,9 @@ export default function Home() {
         <section>
           <h2 className="text-lg font-semibold mb-1">How it works</h2>
           <div className="text-sm text-muted-foreground space-y-1">
-            <p>1. Agent calls <code className="text-xs bg-muted px-1 rounded">POST /api/canvas?userId=xxx&canvasId=yyy</code> with slide data.</p>
+            <p>1. Agent calls <code className="text-xs bg-muted px-1 rounded">POST /api/canvas?userId=xxx&amp;canvasId=yyy</code> with slide data.</p>
             <p>2. Data is stored in Supabase.</p>
-            <p>3. User opens <code className="text-xs bg-muted px-1 rounded">https://agent-canvas-eta.vercel.app/:userId/:canvasId</code>.</p>
+            <p>3. User opens a URL like <code className="text-xs bg-muted px-1 rounded">https://agent-canvas-eta.vercel.app/eric/today</code>.</p>
             <p>4. Frontend reads from Supabase and renders the slides.</p>
           </div>
         </section>
@@ -34,32 +33,30 @@ export default function Home() {
           <div className="text-sm space-y-2">
             <div className="bg-muted p-3 rounded-md">
               <p className="font-medium mb-1">Push slides</p>
-              <p className="text-xs text-muted-foreground">POST /api/canvas?userId={userId}&canvasId={canvasId}</p>
+              <p className="text-xs text-muted-foreground">POST /api/canvas?userId=xxx&amp;canvasId=yyy</p>
               <pre className="text-xs mt-2 overflow-x-auto">
 {`{
   "slides": [
     {
-      "type": "dashboard",     // Required: slide type
-      "title": "My Dashboard",  // Required: display title
-      "data": { ... }           // Required: type-specific data
+      "type": "dashboard",
+      "title": "My Dashboard",
+      "data": { ... }
     }
-  ],
-  "currentIndex": 0             // Optional: start page (default: last slide)
+  ]
 }`}
               </pre>
             </div>
             <div className="bg-muted p-3 rounded-md">
               <p className="font-medium mb-1">Read slides</p>
-              <p className="text-xs text-muted-foreground">GET /api/canvas?userId={userId}&canvasId={canvasId}</p>
-              <p className="text-xs text-muted-foreground mt-1">Returns: { slides: Slide[], currentIndex: number }</p>
+              <p className="text-xs text-muted-foreground">GET /api/canvas?userId=xxx&amp;canvasId=yyy</p>
+              <p className="text-xs text-muted-foreground mt-1">Returns the slide array and current index.</p>
             </div>
           </div>
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold mb-1">Slide Types &amp; Data Schema</h2>
+          <h2 className="text-lg font-semibold mb-1">Slide Types &amp; Data Schemas</h2>
 
-          {/* dashboard */}
           <div className="bg-muted p-3 rounded-md mb-3">
             <h3 className="text-sm font-medium mb-1">dashboard</h3>
             <p className="text-xs text-muted-foreground mb-2">Task list with battery, stats, and collections.</p>
@@ -68,49 +65,61 @@ export default function Home() {
   "type": "dashboard",
   "title": "Eric's Dashboard",
   "data": {
-    "battery": 85,                    // Optional: battery percentage
-    "tasks": [                        // Required: task list
+    "battery": 85,
+    "tasks": [
       {
-        "title": "Call contractor",   // Required: task text
-        "status": "TODO",             // Required: "TODO" | "DONE"
-        "priority": "URGENT",         // Optional: "URGENT" | "HIGH" | "MEDIUM" | "LOW"
-        "due": "today"                // Optional: due date text
+        "title": "Call contractor",
+        "status": "TODO",
+        "priority": "URGENT",
+        "due": "today"
       }
     ],
-    "collections": [                  // Optional: money/payment list
-      {
-        "name": "Job A",              // Required: item name
-        "amount": 100                 // Required: dollar amount
-      }
+    "collections": [
+      { "name": "Job A", "amount": 100 }
     ]
   }
 }`}
             </pre>
+            <table className="text-xs w-full mt-2">
+              <thead><tr className="text-left border-b"><th className="py-1 pr-4">Field</th><th className="py-1 pr-4">Type</th><th className="py-1">Notes</th></tr></thead>
+              <tbody>
+                <tr><td className="py-1 pr-4 font-mono">tasks[].title</td><td className="py-1 pr-4">string</td><td className="py-1 text-muted-foreground">Required</td></tr>
+                <tr><td className="py-1 pr-4 font-mono">tasks[].status</td><td className="py-1 pr-4">string</td><td className="py-1 text-muted-foreground">Required: &quot;TODO&quot; or &quot;DONE&quot;</td></tr>
+                <tr><td className="py-1 pr-4 font-mono">tasks[].priority</td><td className="py-1 pr-4">string</td><td className="py-1 text-muted-foreground">Optional: URGENT / HIGH / MEDIUM / LOW</td></tr>
+                <tr><td className="py-1 pr-4 font-mono">tasks[].due</td><td className="py-1 pr-4">string</td><td className="py-1 text-muted-foreground">Optional: any text</td></tr>
+                <tr><td className="py-1 pr-4 font-mono">collections[].name</td><td className="py-1 pr-4">string</td><td className="py-1 text-muted-foreground">Optional</td></tr>
+                <tr><td className="py-1 pr-4 font-mono">collections[].amount</td><td className="py-1 pr-4">number</td><td className="py-1 text-muted-foreground">Optional</td></tr>
+                <tr><td className="py-1 pr-4 font-mono">battery</td><td className="py-1 pr-4">number</td><td className="py-1 text-muted-foreground">Optional: percentage</td></tr>
+              </tbody>
+            </table>
           </div>
 
-          {/* timeline */}
           <div className="bg-muted p-3 rounded-md mb-3">
             <h3 className="text-sm font-medium mb-1">timeline</h3>
-            <p className="text-xs text-muted-foreground mb-2">Milestones and deadlines in chronological order.</p>
+            <p className="text-xs text-muted-foreground mb-2">Milestones with dates and completion status.</p>
             <pre className="text-xs overflow-x-auto">
 {`{
   "type": "timeline",
   "title": "House Move Countdown",
   "data": {
     "items": [
-      {
-        "title": "Clear furniture",   // Required: milestone text
-        "date": "Jul 27",             // Required: date text
-        "done": true                  // Required: completed or not
-      }
+      { "title": "Clear furniture", "date": "Jul 27", "done": true },
+      { "title": "Hand over keys", "date": "Aug 2", "done": false }
     ]
   }
 }`}
             </pre>
+            <table className="text-xs w-full mt-2">
+              <thead><tr className="text-left border-b"><th className="py-1 pr-4">Field</th><th className="py-1 pr-4">Type</th><th className="py-1">Notes</th></tr></thead>
+              <tbody>
+                <tr><td className="py-1 pr-4 font-mono">items[].title</td><td className="py-1 pr-4">string</td><td className="py-1 text-muted-foreground">Required</td></tr>
+                <tr><td className="py-1 pr-4 font-mono">items[].date</td><td className="py-1 pr-4">string</td><td className="py-1 text-muted-foreground">Required</td></tr>
+                <tr><td className="py-1 pr-4 font-mono">items[].done</td><td className="py-1 pr-4">boolean</td><td className="py-1 text-muted-foreground">Required</td></tr>
+              </tbody>
+            </table>
           </div>
 
-          {/* kanban */}
-          <div className="bg-muted p-3 rounded-md mb-3">
+          <div className="bg-muted p-3 rounded-md">
             <h3 className="text-sm font-medium mb-1">kanban</h3>
             <p className="text-xs text-muted-foreground mb-2">Column-based workflow view.</p>
             <pre className="text-xs overflow-x-auto">
@@ -120,54 +129,51 @@ export default function Home() {
   "data": {
     "columns": [
       {
-        "title": "To Do",             // Required: column name
-        "items": [                    // Required: cards in this column
-          { "title": "Task A" }       // Required: card text
-        ]
+        "title": "To Do",
+        "items": [{ "title": "Task A" }]
       }
     ]
   }
 }`}
             </pre>
+            <table className="text-xs w-full mt-2">
+              <thead><tr className="text-left border-b"><th className="py-1 pr-4">Field</th><th className="py-1 pr-4">Type</th><th className="py-1">Notes</th></tr></thead>
+              <tbody>
+                <tr><td className="py-1 pr-4 font-mono">columns[].title</td><td className="py-1 pr-4">string</td><td className="py-1 text-muted-foreground">Required</td></tr>
+                <tr><td className="py-1 pr-4 font-mono">columns[].items[].title</td><td className="py-1 pr-4">string</td><td className="py-1 text-muted-foreground">Required</td></tr>
+              </tbody>
+            </table>
           </div>
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold mb-1">Quick Example — Agent Push</h2>
+          <h2 className="text-lg font-semibold mb-1">Quick Example</h2>
           <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto">
-{`curl -X POST "https://agent-canvas-eta.vercel.app/api/canvas?userId=eric&canvasId=today" \\
+{`curl -X POST "https://agent-canvas-eta.vercel.app/api/canvas?userId=eric&canvasId=demo" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "slides": [{
-      "type": "dashboard",
-      "title": "Today'\\''s Tasks",
-      "data": {
-        "tasks": [
-          {"title": "Call contractor", "status": "TODO", "priority": "URGENT", "due": "today"}
-        ]
+    "slides": [
+      {
+        "type": "dashboard",
+        "title": "Today",
+        "data": {
+          "tasks": [
+            {"title": "Call contractor", "status": "TODO", "priority": "URGENT"}
+          ]
+        }
       }
-    }, {
-      "type": "timeline",
-      "title": "Countdown",
-      "data": {
-        "items": [
-          {"title": "Clear furniture", "date": "Jul 27", "done": false}
-        ]
-      }
-    }]
+    ]
   }'`}
           </pre>
           <p className="text-xs text-muted-foreground mt-2">
-            Then share: <code className="bg-muted px-1 rounded">https://agent-canvas-eta.vercel.app/eric/today</code>
+            Then share: <code className="bg-muted px-1 rounded">https://agent-canvas-eta.vercel.app/eric/demo</code>
           </p>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold mb-1">Multi-User</h2>
           <p className="text-sm text-muted-foreground">
-            Each <code className="text-xs bg-muted px-1 rounded">userId</code> is a separate namespace. 
-            Any agent can push to any <code className="text-xs bg-muted px-1 rounded">userId/canvasId</code> combination.
-            Users simply open their own link to see the content their agent pushed.
+            Each userId is a separate namespace. Any agent can push to any userId/canvasId combination.
           </p>
         </section>
 
@@ -182,17 +188,8 @@ export default function Home() {
         <section>
           <h2 className="text-lg font-semibold mb-1">什么是 AgentCanvas？</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            AgentCanvas 是 AI Agent 的幻灯片式展示层。Agent 可以把面板、时间线、看板等内容推送到独立的网页上，
-            用户通过浏览器查看，不再被聊天框限制。
+            AgentCanvas 是 AI Agent 的幻灯片式展示层。Agent 可以把面板、时间线、看板等内容推送到独立的网页上。
           </p>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold mb-1">API 参考</h2>
-          <div className="text-sm space-y-1">
-            <p><strong>推送 Slide：</strong></p>
-            <p className="text-xs text-muted-foreground">POST /api/canvas?userId={userId}&canvasId={canvasId}</p>
-          </div>
         </section>
 
         <section>
@@ -200,35 +197,21 @@ export default function Home() {
 
           <div className="bg-muted p-3 rounded-md mb-3">
             <h3 className="text-sm font-medium mb-1">dashboard — 任务面板</h3>
-            <p className="text-xs text-muted-foreground mb-1">data.tasks[].title（必需）任务内容</p>
-            <p className="text-xs text-muted-foreground mb-1">data.tasks[].status（必需）"TODO" 或 "DONE"</p>
-            <p className="text-xs text-muted-foreground mb-1">data.tasks[].priority（可选）"URGENT" / "HIGH" / "MEDIUM" / "LOW"</p>
-            <p className="text-xs text-muted-foreground mb-1">data.tasks[].due（可选）截止日期文字</p>
-            <p className="text-xs text-muted-foreground mb-1">data.collections[].name（可选）收款项目名称</p>
-            <p className="text-xs text-muted-foreground mb-1">data.collections[].amount（可选）收款金额</p>
-            <p className="text-xs text-muted-foreground">data.battery（可选）电池百分比</p>
+            <p className="text-xs text-muted-foreground">data.tasks[].title（必需）· data.tasks[].status（必需，"TODO"或"DONE"）· data.tasks[].priority（可选）· data.tasks[].due（可选）· data.collections（可选）收款列表 · data.battery（可选）电池百分比</p>
           </div>
-
           <div className="bg-muted p-3 rounded-md mb-3">
             <h3 className="text-sm font-medium mb-1">timeline — 时间线</h3>
-            <p className="text-xs text-muted-foreground mb-1">data.items[].title（必需）里程碑名称</p>
-            <p className="text-xs text-muted-foreground mb-1">data.items[].date（必需）日期文字</p>
-            <p className="text-xs text-muted-foreground">data.items[].done（必需）是否已完成</p>
+            <p className="text-xs text-muted-foreground">data.items[].title（必需）· data.items[].date（必需）· data.items[].done（必需）</p>
           </div>
-
           <div className="bg-muted p-3 rounded-md">
             <h3 className="text-sm font-medium mb-1">kanban — 看板</h3>
-            <p className="text-xs text-muted-foreground mb-1">data.columns[].title（必需）列名称</p>
-            <p className="text-xs text-muted-foreground">data.columns[].items[].title（必需）卡片内容</p>
+            <p className="text-xs text-muted-foreground">data.columns[].title（必需）· data.columns[].items[].title（必需）</p>
           </div>
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold mb-1">多用户</h2>
-          <p className="text-sm text-muted-foreground">
-            每个 userId 独立命名空间。Agent 可以推送到任意 userId/canvasId。
-            用户打开自己的链接即可看到 Agent 推送的内容。
-          </p>
+          <h2 className="text-lg font-semibold mb-1">Agent 集成</h2>
+          <p className="text-sm text-muted-foreground">POST /api/canvas?userId=userId&amp;canvasId=canvasId 推送 Slide 数据。用户打开 /:userId/:canvasId 即可查看。</p>
         </section>
 
       </main>
