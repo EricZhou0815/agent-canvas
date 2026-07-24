@@ -8,9 +8,12 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, username } = await req.json()
+    const { email, password, confirmPassword, username } = await req.json()
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
+    }
+    if (password !== confirmPassword) {
+      return NextResponse.json({ error: 'Passwords do not match. confirmPassword must match password.' }, { status: 400 })
     }
 
     // Check if email already registered

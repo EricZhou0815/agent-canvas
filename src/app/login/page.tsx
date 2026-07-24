@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPwd, setConfirmPwd] = useState('')
   const [username, setUsername] = useState('')
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [msg, setMsg] = useState('')
@@ -15,7 +16,10 @@ export default function LoginPage() {
     setMsg('')
     const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register'
     const body: any = { email, password }
-    if (mode === 'register' && username) body.username = username
+    if (mode === 'register') {
+      body.confirmPassword = confirmPwd
+      if (username) body.username = username
+    }
 
     const res = await fetch(endpoint, {
       method: 'POST',
@@ -45,8 +49,12 @@ export default function LoginPage() {
         <input className="w-full rounded-lg border bg-background px-4 py-2 text-sm" placeholder="Password" type="password" value={password}
           onChange={e => setPassword(e.target.value)} required />
         {mode === 'register' && (
-          <input className="w-full rounded-lg border bg-background px-4 py-2 text-sm" placeholder="Username (optional)" value={username}
-            onChange={e => setUsername(e.target.value)} />
+          <>
+            <input className="w-full rounded-lg border bg-background px-4 py-2 text-sm" placeholder="Confirm password" type="password"
+              value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} required />
+            <input className="w-full rounded-lg border bg-background px-4 py-2 text-sm" placeholder="Username (optional)" value={username}
+              onChange={e => setUsername(e.target.value)} />
+          </>
         )}
         <button className="w-full rounded-lg bg-foreground text-background py-2 text-sm font-medium" type="submit">
           {mode === 'login' ? 'Login' : 'Register'}
