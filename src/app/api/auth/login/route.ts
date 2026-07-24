@@ -13,21 +13,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
     }
 
-    const password_hash = crypto.createHash('sha256').update(password).digest('hex')
+    const passwordHash = crypto.createHash('sha256').update(password).digest('hex')
     const { data, error } = await supabase.from('canvas_users')
-      .select('user_id')
+      .select('id, username')
       .eq('email', email)
-      .eq('password_hash', password_hash)
+      .eq('password_hash', passwordHash)
       .single()
 
     if (error || !data) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
-    // Generate a session token (simple — store in cookie later)
-    const session = 'sess_' + crypto.randomBytes(24).toString('hex')
+    // Generate a session token (same format as API token for simplicity)
+    const sessionToken = 'sess_' + crypto.randomBytes(32).toString('hex')
 
-    return NextResponse.json({ user_id: data.user_id, session, message: 'Login successful' })
+    return NextResponse.json({
+      userId: data.id,
+      token: sessionToken,
+      username: data.username,
+      message: 'Login successful. Use token for API calls.',
+    })
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }

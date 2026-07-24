@@ -8,17 +8,19 @@ export default function Page({ params }: { params: { userId: string; canvasId: s
   const [authorized, setAuthorized] = useState(false)
 
   useEffect(() => {
-    const sessionUserId = localStorage.getItem('canvas_user_id')
-    if (!sessionUserId) {
+    const storedUserId = localStorage.getItem('canvas_user_id')
+    const token = localStorage.getItem('canvas_token')
+    if (!storedUserId || !token) {
       router.push('/login')
-    } else if (sessionUserId !== params.userId) {
+    } else if (storedUserId !== params.userId) {
+      // Different userId — ask to login again
       router.push('/login')
     } else {
       setAuthorized(true)
     }
   }, [params.userId, router])
 
-  if (!authorized) return <div className="min-h-screen bg-background flex items-center justify-center"><p className="text-muted-foreground animate-pulse">验证中...</p></div>
+  if (!authorized) return <div className="min-h-screen bg-background flex items-center justify-center"><p className="text-muted-foreground animate-pulse">Verifying...</p></div>
 
   return <CanvasClient userId={params.userId} canvasId={params.canvasId} />
 }

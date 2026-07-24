@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [username, setUsername] = useState('')
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [msg, setMsg] = useState('')
   const router = useRouter()
@@ -13,21 +14,25 @@ export default function LoginPage() {
     e.preventDefault()
     setMsg('')
     const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register'
+    const body: any = { email, password }
+    if (mode === 'register' && username) body.username = username
+
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(body),
     })
     const data = await res.json()
     if (!res.ok) return setMsg(data.error)
 
     if (mode === 'register') {
-      setMsg(`✅ Registered! Your userId: ${data.user_id}. Token: ${data.token}. Save it!`)
-      setMode('login')
+      setMsg(`✅ Registered! Save your token (shown once): ${data.token}`)
+      localStorage.setItem('canvas_token', data.token)
+      localStorage.setItem('canvas_user_id', data.userId)
     } else {
-      localStorage.setItem('canvas_session', data.session)
-      localStorage.setItem('canvas_user_id', data.user_id)
-      router.push(`/${data.user_id}/dashboard`)
+      localStorage.setItem('canvas_token', data.token)
+      localStorage.setItem('canvas_user_id', data.userId)
+      router.push(`/${data.userId}/dashboard`)
     }
   }
 
@@ -39,15 +44,19 @@ export default function LoginPage() {
           onChange={e => setEmail(e.target.value)} required />
         <input className="w-full rounded-lg border bg-background px-4 py-2 text-sm" placeholder="Password" type="password" value={password}
           onChange={e => setPassword(e.target.value)} required />
+        {mode === 'register' && (
+          <input className="w-full rounded-lg border bg-background px-4 py-2 text-sm" placeholder="Username (optional)" value={username}
+            onChange={e => setUsername(e.target.value)} />
+        )}
         <button className="w-full rounded-lg bg-foreground text-background py-2 text-sm font-medium" type="submit">
           {mode === 'login' ? 'Login' : 'Register'}
         </button>
         <p className="text-xs text-center text-muted-foreground">
           <button type="button" onClick={() => setMode(m => m === 'login' ? 'register' : 'login')} className="underline">
-            {mode === 'login' ? 'No account? Register' : 'Have an account? Login'}
+            {mode === 'login' ? 'New identity? Register' : 'Already registered? Login'}
           </button>
         </p>
-        {msg && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{msg}</p>}
+        {msg && <p className="text-xs text-muted-foreground whitespace-pre-wrap break-all">{msg}</p>}
       </form>
     </div>
   )
