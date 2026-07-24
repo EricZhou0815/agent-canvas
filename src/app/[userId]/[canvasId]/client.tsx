@@ -43,13 +43,17 @@ export default function CanvasClient({ userId, canvasId }: { userId: string; can
           <h1 className="text-lg font-bold">◆ AgentCanvas</h1>
           <span className="text-xs text-muted-foreground">{userId}/{canvasId}</span>
         </div>
-        {slides.length > 1 && (
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setIndex(i => Math.max(0, i - 1))} disabled={index === 0}>←</Button>
-            <span className="text-sm text-muted-foreground">{index + 1}/{slides.length}</span>
-            <Button variant="outline" size="sm" onClick={() => setIndex(i => Math.min(slides.length - 1, i + 1))} disabled={index === slides.length - 1}>→</Button>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => router.push(`/${userId}/dashboard`)}>Dashboard</Button>
+          <Button variant="ghost" size="sm" onClick={() => { localStorage.clear(); router.push('/') }}>Logout</Button>
+          {slides.length > 1 && (
+            <>
+              <span className="text-sm text-muted-foreground mx-1">{index + 1}/{slides.length}</span>
+              <Button variant="outline" size="sm" onClick={() => setIndex(i => Math.max(0, i - 1))} disabled={index === 0}>←</Button>
+              <Button variant="outline" size="sm" onClick={() => setIndex(i => Math.min(slides.length - 1, i + 1))} disabled={index === slides.length - 1}>→</Button>
+            </>
+          )}
+        </div>
       </header>
       <main className="p-6 max-w-4xl mx-auto">
         {s.type === 'dashboard' && <Dashboard data={s.data} title={s.title} userId={userId} canvasId={canvasId} />}
