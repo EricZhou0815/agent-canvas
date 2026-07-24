@@ -27,7 +27,12 @@ export default function DashboardClient({ userId }: { userId: string }) {
     <div className="min-h-screen bg-background">
       <header className="border-b px-6 py-4 flex items-center justify-between">
         <h1 className="text-xl font-bold">◆ AgentCanvas</h1>
-        <span className="text-sm text-muted-foreground">{userId.slice(0, 8)}...</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">{userId.slice(0, 8)}...</span>
+          <button onClick={() => { localStorage.clear(); router.push('/login') }}
+            className="text-xs px-3 py-1.5 rounded bg-muted hover:bg-muted/80 text-muted-foreground"
+          >Logout</button>
+        </div>
       </header>
       <main className="max-w-3xl mx-auto p-6 space-y-8">
         {loading ? (
