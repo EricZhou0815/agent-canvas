@@ -7,6 +7,7 @@ export default function DashboardClient({ userId }: { userId: string }) {
   const [user, setUser] = useState<any>(null)
   const [canvases, setCanvases] = useState<any[]>([])
   const [token, setToken] = useState('')
+  const [showToken, setShowToken] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -56,11 +57,16 @@ export default function DashboardClient({ userId }: { userId: string }) {
               <code className="bg-background px-1 rounded">Authorization: Bearer &lt;token&gt;</code>
             </p>
             <div className="flex gap-2">
-              <code className="flex-1 bg-background rounded px-3 py-2 text-xs break-all select-all">{token}</code>
+              <code className="flex-1 bg-background rounded px-3 py-2 text-xs break-all select-all">
+                {showToken ? token : '••••••••••••••••••••••••••••••••'}
+              </code>
+              <button onClick={() => setShowToken(!showToken)}
+                className="px-3 py-2 rounded bg-muted hover:bg-muted/80 text-xs shrink-0"
+              >{showToken ? 'Hide' : 'Show'}</button>
               <button onClick={() => navigator.clipboard.writeText(token)}
-                className="px-3 py-2 rounded bg-foreground text-background text-xs shrink-0">Copy</button>
+                className="px-3 py-2 rounded bg-foreground text-background text-xs shrink-0"
+              >Copy</button>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">Token is shown only once after registration. Save it securely.</p>
           </div>
         </section>
         <section>

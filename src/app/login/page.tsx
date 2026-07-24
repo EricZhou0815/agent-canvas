@@ -33,7 +33,7 @@ export default function LoginPage() {
     if (!res.ok) return setMsg(data.error)
 
     if (mode === 'register') {
-      setMsg(`✅ Registered! Save your token (shown once): ${data.token}`)
+      setMsg('✅ Registered! Go to your Dashboard to view your API token.')
       localStorage.setItem('canvas_token', data.token)
       localStorage.setItem('canvas_user_id', data.userId)
     } else {
