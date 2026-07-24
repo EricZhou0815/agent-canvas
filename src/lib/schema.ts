@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const slideTypeEnum = z.enum(['dashboard', 'timeline', 'kanban', 'form'])
+const slideTypeEnum = z.enum(['dashboard', 'timeline', 'kanban', 'form', 'page'])
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Task title is required'),
@@ -46,6 +46,7 @@ const slideSchema = z.object({
     items: z.array(timelineItemSchema).optional(),
     columns: z.array(kanbanColumnSchema).optional(),
     fields: z.array(formFieldSchema).optional(),
+    content: z.string().optional(),
   }),
 })
 

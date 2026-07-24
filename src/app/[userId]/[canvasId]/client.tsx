@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface Slide { type: string; title: string; data: any }
 
@@ -39,6 +41,7 @@ export default function CanvasClient({ userId, canvasId }: { userId: string; can
         {s.type === 'dashboard' && <Dashboard data={s.data} title={s.title} />}
         {s.type === 'form' && <FormSlide data={s.data} title={s.title} />}
         {s.type === 'timeline' && <Timeline data={s.data} title={s.title} />}
+        {s.type === 'page' && <PageSlide data={s.data} title={s.title} />}
       </main>
     </div>
   )
@@ -116,6 +119,20 @@ function Timeline({ data, title }: { data: any; title: string }) {
           <p className="text-xs text-muted-foreground">{item.date}</p>
         </div>
       ))}</div></CardContent>
+    </Card>
+  )
+}
+
+function PageSlide({ data, title }: { data: any; title: string }) {
+  const content = data?.content || ''
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-xl">{title}</CardTitle></CardHeader>
+      <CardContent>
+        <div className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-code:bg-muted prose-code:px-1 prose-code:rounded prose-pre:bg-muted prose-pre:text-foreground prose-a:text-primary prose-li:text-muted-foreground">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+        </div>
+      </CardContent>
     </Card>
   )
 }

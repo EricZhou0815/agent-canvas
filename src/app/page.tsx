@@ -109,6 +109,10 @@ Body: { "slides": [...] }`}</pre>
               <p className="font-medium">kanban</p>
               <p className="text-xs text-muted-foreground">Column-based workflow</p>
             </div>
+            <div className="bg-muted p-3 rounded-md">
+              <p className="font-medium">page</p>
+              <p className="text-xs text-muted-foreground">Markdown report / document</p>
+            </div>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
             See <a href="https://github.com/EricZhou0815/agent-canvas" className="underline">README</a> for full data schemas.
