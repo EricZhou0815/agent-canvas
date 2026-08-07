@@ -36,6 +36,12 @@ const formFieldSchema = z.object({
   placeholder: z.string().optional(),
 })
 
+const formButtonSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+  variant: z.enum(['primary', 'secondary', 'destructive']).optional(),
+})
+
 const tableColumnSchema = z.object({
   key: z.string().min(1),
   label: z.string().min(1),
@@ -64,6 +70,7 @@ const slideSchema = z.object({
     items: z.array(timelineItemSchema).optional(),
     columns: z.array(kanbanColumnSchema).optional(),
     fields: z.array(formFieldSchema).optional(),
+    buttons: z.array(formButtonSchema).optional(),
     content: z.string().optional(),
     table: tableSchema.optional(),
     chart: chartSchema.optional(),

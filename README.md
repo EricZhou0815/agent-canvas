@@ -94,7 +94,9 @@ Examples:
 | POST | `/api/auth/login` | — | User | Login, get session token |
 | POST | `/api/canvas` | Bearer token | Agent | Push slides |
 | GET | `/api/canvas` | — | Frontend | Read slides (public) |
-| POST | `/api/action` | — | Frontend | Forward user actions to webhook |
+| POST | `/api/action` | — | Frontend | Store user action + forward to webhook |
+| GET | `/api/action/pending` | Bearer token | Agent | Poll queued user actions |
+| POST | `/api/action/ack` | Bearer token | Agent | Mark actions as handled |
 | GET | `/api/user` | — | Dashboard | Get user info + canvas list |
 | POST | `/api/user/webhook` | — | Dashboard | Save webhook URL |
 
@@ -108,21 +110,74 @@ Examples:
 | `timeline` | Milestones & deadlines | `{ items: [{ title, date, done }] }` |
 | `page` | Markdown report | `{ content: "# Markdown" }` |
 | `kanban` | Column-based workflow | `{ columns: [{ title, items }] }` |
-| `form` | User input | `{ fields: [{ key, label }] }` |
+| `form` | User input | `{ fields: [{ key, label, type? }], buttons?: [{ key, label, variant? }] }` |
 | `table` | Structured data | `{ table: { columns, rows } }` |
 | `chart` | Line / bar / pie chart | `{ chart: { type, data: [{ name, value }] } }` |
 
 ---
 
-## Webhook Integration
+## Event Delivery (User Actions → Agent)
 
-When a user interacts with a Canvas (clicks, fills forms), actions are forwarded to your local machine. Set your webhook URL in the Dashboard.
+Every user interaction on a Canvas — checking a task, clicking a button, submitting a form, typing a message — is stored as a **structured event** in the `actions` queue, then delivered to the agent.
 
-1. Run a webhook listener on your machine
-2. Expose it via Cloudflare Tunnel: `cloudflared tunnel --url http://localhost:8888`
-3. Go to Dashboard → paste the tunnel URL → Save
+**Event payload:**
 
-All user actions will be POSTed to that URL in real time.
+```json
+{
+  "actionId": 42,
+  "action": "toggle_task",
+  "payload": { "taskIndex": 0, "title": "Call contractor", "done": true },
+  "userId": "<uuid>",
+  "canvasId": "today",
+  "timestamp": "2026-08-07T05:00:00Z"
+}
+```
+
+**How an agent receives events — three tiers, same queue:**
+
+1. **Webhook (cloud agents)** — set a webhook URL in the Dashboard; each event is POSTed in real time. If the webhook is down, the event stays queued (no loss).
+2. **Supabase Realtime (local agents)** — subscribe to INSERTs on the `actions` table over WebSocket. No tunnel, no public IP needed.
+3. **Polling (any agent, zero config)** — `GET /api/action/pending?userId=xxx` returns queued events; `POST /api/action/ack` marks them handled. This is the recommended path for local agents without a public IP.
+
+**Polling loop (recommended for local agents):**
+
+```bash
+# fetch pending events
+curl -s "https://agent-canvas-eta.vercel.app/api/action/pending?userId=<uuid>" \
+  -H "Authorization: Bearer <token>"
+# → { "ok": true, "count": 2, "actions": [...] }
+
+# mark handled
+curl -s -X POST "https://agent-canvas-eta.vercel.app/api/action/ack" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"actionIds": [42, 43]}'
+# → { "ok": true, "acked": 2 }
+```
+
+**Ready-made watcher:** `agent-watcher.py` polls pending events, handles known actions (e.g. `toggle_task` syncs into family-os), logs everything to `~/.hermes/agentcanvas/events/`, and acks. Run from cron every 1–2 minutes:
+
+```cron
+* * * * * cd ~/agent-canvas && python3 agent-watcher.py poll >> /tmp/agent-watcher.log 2>&1
+```
+
+**Action types emitted by the UI:**
+
+| Action | Trigger | Payload |
+|--------|---------|---------|
+| `toggle_task` | Checkbox on dashboard | `{ taskIndex, title, done }` |
+| `form_submit` | Form submit button | `{ values: { key: value } }` |
+| `choice` | Action buttons (confirm/reject) | `{ choice: "confirm" }` |
+| `text` | Free-text input (textarea) | `{ text: "..." }` |
+
+---
+
+## Setup Checklist (one time)
+
+1. Run the SQL in `supabase/migrations/20260807_create_actions.sql` in Supabase Dashboard → SQL Editor (creates the `actions` queue table).
+2. Save credentials: `python3 agent-canvas.py config --token <t> --user-id <id>`
+3. (Optional) Set a webhook URL in the Dashboard for real-time cloud delivery.
+4. (Optional) Add the `agent-watcher.py` cron for local delivery.
 
 ---
 
@@ -167,59 +222,6 @@ To ship a new theme (dark, high-contrast, brand colors), override the tokens in 
 
 ---
 
-## User Interaction & Data Flow
-
-AgentCanvas is **bidirectional** — users don't just view slides, they interact with them, and those interactions flow back to the agent.
-
-```
-User clicks / checks / submits on a Canvas
-                  ↓
-          POST /api/action
-                  ↓
-        Action stored (pending queue)
-                  ↓
-        ┌─────────┼────────────┐
-        ↓         ↓            ↓
-  Webhook    Realtime     Polling
-  (cloud     (local       (any agent,
-   agent)     watcher)     zero config)
-```
-
-**Action payload shape:**
-
-```json
-{
-  "action": "toggle_task",
-  "payload": { "taskIndex": 0, "title": "Call contractor", "done": true },
-  "userId": "<uuid>",
-  "canvasId": "today",
-  "timestamp": "2026-08-07T05:00:00Z"
-}
-```
-
-**How an agent receives actions — three tiers:**
-
-1. **Webhook (cloud agents)** — set a webhook URL in the Dashboard; actions are POSTed in real time. Already implemented.
-2. **Supabase Realtime (local agents)** — run a small watcher that subscribes to the actions channel over WebSocket (same pattern as a messaging gateway). No tunnel, no public IP needed.
-3. **Polling (any agent)** — call `GET /api/action/pending?userId=xxx` to fetch queued actions. Zero configuration, works everywhere.
-
-**Agent-side watcher (example):**
-
-```javascript
-// agent-watcher.js — local agent receives user actions in real time
-const { createClient } = require('@supabase/supabase-js')
-const { exec } = require('child_process')
-
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
-
-supabase.channel('agent-actions')
-  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'actions' },
-    (payload) => exec(`./handle-action.sh '${JSON.stringify(payload.new)}'`))
-  .subscribe()
-```
-
----
-
 ## Tech Stack
 
 Next.js · shadcn/ui · Supabase · Zod · Recharts · Tailwind CSS · TypeScript · lucide-react
@@ -251,7 +253,9 @@ Build locally: `npx opennextjs-cloudflare build`, then deploy via the Cloudflare
 ```
 agent-canvas/
 ├── agent-canvas.py              # CLI client
-├── webhook-listener.cjs         # Local webhook receiver
+├── agent-watcher.py             # Local event polling watcher (cron-friendly)
+├── webhook-listener.cjs         # Local webhook receiver (cloudflared tunnel)
+├── supabase/migrations/         # SQL migrations (run in Supabase Dashboard)
 ├── src/
 │   ├── app/
 │   │   ├── page.tsx             # Homepage (agent docs)
@@ -264,7 +268,9 @@ agent-canvas/
 │   │       ├── auth/register    # Identity registration
 │   │       ├── auth/login       # Login
 │   │       ├── canvas           # Push/read slides
-│   │       ├── action           # Forward user actions
+│   │       ├── action           # Store user actions
+│   │       ├── action/pending   # Poll queued actions (agent)
+│   │       ├── action/ack       # Ack handled actions (agent)
 │   │       ├── user             # User info + canvas list
 │   │       └── user/webhook     # Save webhook URL
 │   ├── components/ui/           # shadcn/ui components

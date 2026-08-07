@@ -59,7 +59,7 @@ export default function CanvasClient({ userId, canvasId }: { userId: string; can
       </header>
       <main className="p-6 max-w-3xl mx-auto">
         {s.type === 'dashboard' && <Dashboard data={s.data} title={s.title} userId={userId} canvasId={canvasId} />}
-        {s.type === 'form' && <FormSlide data={s.data} title={s.title} />}
+        {s.type === 'form' && <FormSlide data={s.data} title={s.title} userId={userId} canvasId={canvasId} />}
         {s.type === 'timeline' && <Timeline data={s.data} title={s.title} />}
         {s.type === 'page' && <PageSlide data={s.data} title={s.title} />}
         {s.type === 'table' && <TableSlide data={s.data} title={s.title} />}
@@ -135,19 +135,90 @@ function Dashboard({ data, title, userId, canvasId }: { data: any; title: string
   )
 }
 
-function FormSlide({ data, title }: { data: any; title: string }) {
+function FormSlide({ data, title, userId, canvasId }: { data: any; title: string; userId: string; canvasId: string }) {
   const fields = data?.fields || []
+  const buttons = data?.buttons || []
   const [values, setValues] = useState<Record<string, string>>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [sent, setSent] = useState<string | null>(null)
+
+  const send = async (action: string, payload: any) => {
+    setSubmitting(true)
+    try {
+      await fetch('/api/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, payload, userId, canvasId }),
+      })
+      setSent(action)
+    } catch {
+      setSent('error')
+    }
+    setSubmitting(false)
+  }
+
+  // Buttons-only card (e.g. confirm / reject)
+  if (fields.length === 0 && buttons.length > 0) {
+    return (
+      <Card>
+        <CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader>
+        <CardContent className="flex gap-3">
+          {buttons.map((b: any) => (
+            <Button
+              key={b.key}
+              variant={b.variant === 'destructive' ? 'destructive' : b.variant === 'secondary' ? 'secondary' : 'default'}
+              disabled={submitting || sent !== null}
+              onClick={() => send('choice', { choice: b.key })}
+            >
+              {sent === b.key ? '已提交' : b.label}
+            </Button>
+          ))}
+          {sent === 'error' && <p className="text-xs text-destructive">提交失败</p>}
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
-    <Card><CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader>
+    <Card>
+      <CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader>
       <CardContent className="space-y-4">
         {fields.map((f: any) => (
           <div key={f.key} className="space-y-1.5">
             <label className="text-[13px] font-medium">{f.label}</label>
-            <Input value={values[f.key] || ''} onChange={e => setValues(v => ({...v, [f.key]: e.target.value}))} placeholder={f.placeholder || ''} />
+            {f.type === 'textarea' ? (
+              <textarea
+                value={values[f.key] || ''}
+                onChange={e => setValues(v => ({ ...v, [f.key]: e.target.value }))}
+                placeholder={f.placeholder || ''}
+                rows={4}
+                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+              />
+            ) : (
+              <Input value={values[f.key] || ''} onChange={e => setValues(v => ({ ...v, [f.key]: e.target.value }))} placeholder={f.placeholder || ''} />
+            )}
           </div>
         ))}
-        <Button className="w-full">提交</Button>
+        <div className="flex gap-3">
+          <Button
+            className="flex-1"
+            disabled={submitting || sent !== null}
+            onClick={() => send('form_submit', { values })}
+          >
+            {sent === 'form_submit' ? '已提交 ✓' : '提交'}
+          </Button>
+          {buttons.map((b: any) => (
+            <Button
+              key={b.key}
+              variant={b.variant === 'destructive' ? 'destructive' : b.variant === 'secondary' ? 'secondary' : 'default'}
+              disabled={submitting || sent !== null}
+              onClick={() => send('choice', { choice: b.key, values })}
+            >
+              {b.label}
+            </Button>
+          ))}
+        </div>
+        {sent === 'error' && <p className="text-xs text-destructive">提交失败，请重试</p>}
       </CardContent>
     </Card>
   )
