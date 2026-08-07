@@ -144,9 +144,105 @@ The API returns descriptive Zod validation errors:
 
 ---
 
+## Design System & Theming
+
+AgentCanvas uses **design tokens** (CSS variables) — no hardcoded colors in components. This means every user can customize the look by changing a few variables.
+
+**Theme tokens** (`src/app/globals.css`):
+
+| Token | Default (Linear Light) | Purpose |
+|-------|----------------------|---------|
+| `--color-background` | `#F7F8F8` | Page background |
+| `--color-foreground` | `#0F1117` | Primary text |
+| `--color-card` | `#FFFFFF` | Card surfaces |
+| `--color-primary` | `#5E6AD2` | Accent (buttons, links) |
+| `--color-border` | `#E2E4E5` | Hairline borders |
+| `--color-success` | `#059669` | Positive states |
+| `--color-destructive` | `#E5484D` | Errors / urgent |
+| `--radius` | `0.5rem` | Corner radius |
+
+**Icons:** [lucide-react](https://lucide.dev) — no emoji in the UI.
+
+To ship a new theme (dark, high-contrast, brand colors), override the tokens in `globals.css` — no component changes needed.
+
+---
+
+## User Interaction & Data Flow
+
+AgentCanvas is **bidirectional** — users don't just view slides, they interact with them, and those interactions flow back to the agent.
+
+```
+User clicks / checks / submits on a Canvas
+                  ↓
+          POST /api/action
+                  ↓
+        Action stored (pending queue)
+                  ↓
+        ┌─────────┼────────────┐
+        ↓         ↓            ↓
+  Webhook    Realtime     Polling
+  (cloud     (local       (any agent,
+   agent)     watcher)     zero config)
+```
+
+**Action payload shape:**
+
+```json
+{
+  "action": "toggle_task",
+  "payload": { "taskIndex": 0, "title": "Call contractor", "done": true },
+  "userId": "<uuid>",
+  "canvasId": "today",
+  "timestamp": "2026-08-07T05:00:00Z"
+}
+```
+
+**How an agent receives actions — three tiers:**
+
+1. **Webhook (cloud agents)** — set a webhook URL in the Dashboard; actions are POSTed in real time. Already implemented.
+2. **Supabase Realtime (local agents)** — run a small watcher that subscribes to the actions channel over WebSocket (same pattern as a messaging gateway). No tunnel, no public IP needed.
+3. **Polling (any agent)** — call `GET /api/action/pending?userId=xxx` to fetch queued actions. Zero configuration, works everywhere.
+
+**Agent-side watcher (example):**
+
+```javascript
+// agent-watcher.js — local agent receives user actions in real time
+const { createClient } = require('@supabase/supabase-js')
+const { exec } = require('child_process')
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
+
+supabase.channel('agent-actions')
+  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'actions' },
+    (payload) => exec(`./handle-action.sh '${JSON.stringify(payload.new)}'`))
+  .subscribe()
+```
+
+---
+
 ## Tech Stack
 
-Next.js · shadcn/ui · Supabase · Zod · Recharts · Tailwind CSS · TypeScript
+Next.js · shadcn/ui · Supabase · Zod · Recharts · Tailwind CSS · TypeScript · lucide-react
+
+---
+
+## Deployment
+
+**Vercel (primary)** — push to `main`, auto-deploys to `https://agent-canvas-eta.vercel.app`. No manual deploy needed.
+
+**Cloudflare Workers (for mainland China)** — `*.vercel.app` is blocked in mainland China; Cloudflare Workers/Pages is reachable there. Config is already in the repo:
+
+- `open-next.config.ts` — OpenNext adapter (no ISR/cache)
+- `wrangler.jsonc` — Worker config (name: `agent-canvas`, nodejs_compat)
+
+Build locally: `npx opennextjs-cloudflare build`, then deploy via the Cloudflare Dashboard (Workers & Pages → Create → connect the GitHub repo, framework: Next.js/OpenNext, Node 22).
+
+**Env vars required (both platforms):**
+
+| Variable | Value |
+|----------|-------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (keep secret) |
 
 ---
 
