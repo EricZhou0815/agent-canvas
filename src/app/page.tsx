@@ -14,8 +14,8 @@ export default function Home() {
         <section className="text-center py-8">
           <h2 className="text-3xl font-bold mb-2">◆ AgentCanvas</h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            A slide-based UI layer for AI agents. Push structured slides to a dedicated web page
-            that users open in their browser. No chat bubble limits.
+            The presentation layer for AI agents. Claude has Artifacts, ChatGPT has Canvas —
+            AgentCanvas gives every other agent a shareable, interactive web page for its output.
           </p>
         </section>
 

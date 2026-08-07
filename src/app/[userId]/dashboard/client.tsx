@@ -46,45 +46,45 @@ export default function DashboardClient({ userId }: { userId: string }) {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b px-6 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">◆ AgentCanvas</h1>
+      <header className="sticky top-0 z-10 flex items-center justify-between px-6 h-12 bg-background/80 backdrop-blur border-b">
+        <h1 className="text-[15px] font-semibold tracking-tight">◆ AgentCanvas</h1>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">{userId.slice(0, 8)}...</span>
+          <span className="text-xs text-muted-foreground">{userId.slice(0, 8)}...</span>
           <button onClick={() => { localStorage.clear(); router.push('/') }}
-            className="text-xs px-3 py-1.5 rounded bg-muted hover:bg-muted/80 text-muted-foreground"
+            className="text-xs px-3 py-1.5 rounded-md border bg-card hover:bg-muted/50 text-muted-foreground transition-colors"
           >Logout</button>
         </div>
       </header>
-      <main className="max-w-3xl mx-auto p-6 space-y-8">
+      <main className="max-w-3xl mx-auto p-6 space-y-6">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-6 h-6 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (<>
         <section>
-          <h2 className="text-lg font-semibold mb-3">Profile</h2>
-          <div className="bg-muted rounded-lg p-4 space-y-2 text-sm">
-            <p><span className="text-muted-foreground">Email:</span> {user?.email || '...'}</p>
-            <p><span className="text-muted-foreground">Username:</span> {user?.username || '—'}</p>
-            <p><span className="text-muted-foreground">User ID:</span> <code className="bg-background px-1.5 py-0.5 rounded text-xs">{userId}</code></p>
+          <h2 className="text-sm font-semibold mb-2 uppercase tracking-wide text-muted-foreground">Profile</h2>
+          <div className="bg-card rounded-lg border divide-y">
+            <div className="flex justify-between px-4 py-2.5 text-[13px]"><span className="text-muted-foreground">Email</span><span>{user?.email || '...'}</span></div>
+            <div className="flex justify-between px-4 py-2.5 text-[13px]"><span className="text-muted-foreground">Username</span><span>{user?.username || '—'}</span></div>
+            <div className="flex justify-between px-4 py-2.5 text-[13px]"><span className="text-muted-foreground">User ID</span><code className="text-xs bg-muted px-1.5 py-0.5 rounded">{userId.slice(0, 12)}…</code></div>
           </div>
         </section>
         <section>
-          <h2 className="text-lg font-semibold mb-3">API Token</h2>
-          <div className="bg-muted rounded-lg p-4">
+          <h2 className="text-sm font-semibold mb-2 uppercase tracking-wide text-muted-foreground">API Token</h2>
+          <div className="bg-card rounded-lg border p-4">
             <p className="text-xs text-muted-foreground mb-2">
               Use this token to authenticate API calls.{' '}
-              <code className="bg-background px-1 rounded">Authorization: Bearer &lt;token&gt;</code>
+              <code className="bg-muted px-1 rounded">Authorization: Bearer &lt;token&gt;</code>
             </p>
             <div className="flex gap-2">
-              <code className="flex-1 bg-background rounded px-3 py-2 text-xs break-all select-all">
+              <code className="flex-1 bg-muted rounded-md px-3 py-2 text-xs break-all select-all">
                 {showToken ? token : '••••••••••••••••••••••••••••••••'}
               </code>
               <button onClick={() => setShowToken(!showToken)}
-                className="px-3 py-2 rounded bg-muted hover:bg-muted/80 text-xs shrink-0"
+                className="px-3 py-2 rounded-md border bg-card hover:bg-muted/50 text-xs shrink-0 transition-colors"
               >{showToken ? 'Hide' : 'Show'}</button>
               <button onClick={() => { navigator.clipboard.writeText(token); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
-                className="px-3 py-2 rounded bg-foreground text-background text-xs shrink-0"
+                className="px-3 py-2 rounded-md bg-foreground text-background text-xs shrink-0 hover:opacity-90 transition-opacity"
               >{copied ? 'Copied!' : 'Copy'}</button>
             </div>
           </div>
@@ -92,40 +92,40 @@ export default function DashboardClient({ userId }: { userId: string }) {
 
         {/* Webhook */}
         <section>
-          <h2 className="text-lg font-semibold mb-3">Webhook (Agent Callback)</h2>
-          <div className="bg-muted rounded-lg p-4">
+          <h2 className="text-sm font-semibold mb-2 uppercase tracking-wide text-muted-foreground">Webhook (Agent Callback)</h2>
+          <div className="bg-card rounded-lg border p-4">
             <p className="text-xs text-muted-foreground mb-2">
               When you interact with a Canvas (click, submit), actions are forwarded to this URL.
               Run a local webhook listener and expose it via Cloudflare Tunnel.
             </p>
             <div className="flex gap-2">
-              <input className="flex-1 bg-background rounded px-3 py-2 text-xs border"
+              <input className="flex-1 bg-muted rounded-md px-3 py-2 text-xs border-transparent focus:border-ring focus:ring-1 focus:ring-ring outline-none transition"
                 placeholder="https://xxx.trycloudflare.com"
                 value={webhookInput}
                 onChange={e => setWebhookInput(e.target.value)}
               />
               <button onClick={saveWebhook}
-                className="px-3 py-2 rounded bg-foreground text-background text-xs shrink-0"
+                className="px-3 py-2 rounded-md bg-foreground text-background text-xs shrink-0 hover:opacity-90 transition-opacity"
               >{saving ? 'Saving...' : 'Save'}</button>
             </div>
-            {savedMsg && <p className="text-xs text-green-500 mt-1">{savedMsg}</p>}
+            {savedMsg && <p className="text-xs text-success mt-1">{savedMsg}</p>}
           </div>
         </section>
         <section>
-          <h2 className="text-lg font-semibold mb-3">Canvases</h2>
+          <h2 className="text-sm font-semibold mb-2 uppercase tracking-wide text-muted-foreground">Canvases</h2>
           {canvases.length === 0 ? (
             <p className="text-sm text-muted-foreground">No canvases yet. Tell your agent to push some data!</p>
           ) : (
-            <div className="space-y-2">
+            <div className="bg-card rounded-lg border divide-y">
               {canvases.map((c: any, i: number) => (
                 <a key={i} href={`/${userId}/${c.name}`}
-                  className="block bg-muted rounded-lg p-4 hover:bg-muted/80 transition-colors"
+                  className="block px-4 py-3 hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{c.name}</span>
+                    <span className="text-[13px] font-medium">{c.name}</span>
                     <span className="text-xs text-muted-foreground">{c.slideCount} slides</span>
                   </div>
-                  {c.updatedAt && <p className="text-xs text-muted-foreground mt-1">Updated: {new Date(c.updatedAt).toLocaleDateString()}</p>}
+                  {c.updatedAt && <p className="text-xs text-muted-foreground mt-0.5">Updated: {new Date(c.updatedAt).toLocaleDateString()}</p>}
                 </a>
               ))}
             </div>

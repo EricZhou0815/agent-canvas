@@ -1,16 +1,27 @@
 # ◆ AgentCanvas
 
-> Slide-based UI layer for AI agents.  
-> AI Agent 的幻灯片式展示层。
+> The presentation layer for AI agents.
 
-Agents no longer trapped inside chat bubbles. Push structured slides — dashboards, timelines,
-reports, kanban boards — to a dedicated web page. Users open a link. Agents stay in control.
+**Claude has Artifacts. ChatGPT has Canvas. AgentCanvas is the presentation layer for every other agent.**
+
+Every agent — Claude Code, Codex, Cursor, personal assistants, agent frameworks — produces output trapped inside a chat bubble. AgentCanvas gives any third-party agent a dedicated, shareable, interactive web page to present structured output.
 
 ---
 
-## 🇬🇧 English — Agent Integration
+## Why AgentCanvas
 
-### Quick Start for AI Agents
+| | Claude Artifacts | ChatGPT Canvas | **AgentCanvas** |
+|---|---|---|---|
+| Works with any agent | ❌ Claude only | ❌ ChatGPT only | ✅ **Any agent, any platform** |
+| Standalone shareable URL | ⚠️ Limited | ❌ | ✅ |
+| Interactive (user actions → agent) | ❌ View only | ⚠️ Edit only | ✅ **Bidirectional** |
+| Agent-first API | ❌ | ❌ | ✅ |
+
+**The two-way channel is the moat:** agents push slides to the page; users click, check, and submit on the page; actions are forwarded back to the agent via webhook.
+
+---
+
+## Quick Start for AI Agents
 
 **1. Register (one time)**
 
@@ -45,7 +56,9 @@ python3 agent-canvas.py push today dashboard "My Dashboard" --data '{
 **4. Share the link**
 Your user opens the link and sees the slides. Push new slides any time — the page updates automatically.
 
-### CLI Reference
+---
+
+## CLI Reference
 
 ```
 Usage: ac <command> [options]
@@ -55,7 +68,7 @@ Commands:
   push <canvasId> <type> <title> [flags]    Push a slide
   list [userId]                              List all canvases
 
-Slide types: dashboard, timeline, page, kanban, form
+Slide types: dashboard, timeline, page, kanban, form, table, chart
 
 Flags for push:
   --data <json>         Full slide data (overrides other flags)
@@ -71,7 +84,9 @@ Examples:
   ac push milestones timeline "Timeline" --data '{"items":[{"title":"Phase 1","date":"Jul 27","done":false}]}'
 ```
 
-### API Reference
+---
+
+## API Reference
 
 | Method | Endpoint | Auth | Who | What |
 |--------|----------|------|-----|------|
@@ -83,57 +98,25 @@ Examples:
 | GET | `/api/user` | — | Dashboard | Get user info + canvas list |
 | POST | `/api/user/webhook` | — | Dashboard | Save webhook URL |
 
-### Slide Data Schemas
+---
 
-**dashboard**
-```typescript
-{
-  type: "dashboard",
-  title: string,
-  data: {
-    battery?: number,              // percentage 0-100
-    tasks: [{                       // required
-      title: string,                // required
-      status: "TODO" | "DONE",     // required
-      priority?: "LOW"|"MEDIUM"|"HIGH"|"URGENT",
-      due?: string
-    }],
-    collections?: [{ name: string, amount: number }]  // payments
-  }
-}
-```
+## Slide Types
 
-**page** — Markdown report
-```typescript
-{
-  type: "page",
-  title: string,
-  data: { content: string }  // Markdown
-}
-```
+| Type | Purpose | Data shape |
+|------|---------|------------|
+| `dashboard` | Task board with stats | `{ battery?, tasks[], collections[] }` |
+| `timeline` | Milestones & deadlines | `{ items: [{ title, date, done }] }` |
+| `page` | Markdown report | `{ content: "# Markdown" }` |
+| `kanban` | Column-based workflow | `{ columns: [{ title, items }] }` |
+| `form` | User input | `{ fields: [{ key, label }] }` |
+| `table` | Structured data | `{ table: { columns, rows } }` |
+| `chart` | Line / bar / pie chart | `{ chart: { type, data: [{ name, value }] } }` |
 
-**timeline**
-```typescript
-{
-  type: "timeline",
-  title: string,
-  data: { items: [{ title: string, date: string, done: boolean }] }
-}
-```
+---
 
-**kanban**
-```typescript
-{
-  type: "kanban",
-  title: string,
-  data: { columns: [{ title: string, items: [{ title: string }] }] }
-}
-```
+## Webhook Integration
 
-### Webhook Integration
-
-When a user interacts with a Canvas (clicks, fills forms), actions can be forwarded
-to your local machine. Set your webhook URL in the Dashboard.
+When a user interacts with a Canvas (clicks, fills forms), actions are forwarded to your local machine. Set your webhook URL in the Dashboard.
 
 1. Run a webhook listener on your machine
 2. Expose it via Cloudflare Tunnel: `cloudflared tunnel --url http://localhost:8888`
@@ -141,7 +124,9 @@ to your local machine. Set your webhook URL in the Dashboard.
 
 All user actions will be POSTed to that URL in real time.
 
-### Error Handling
+---
+
+## Error Handling
 
 The API returns descriptive Zod validation errors:
 
@@ -150,64 +135,18 @@ The API returns descriptive Zod validation errors:
   "error": "Schema validation failed",
   "issues": [{
     "path": "slides.0.type",
-    "message": "Invalid option: expected one of dashboard|timeline|page|kanban|form",
+    "message": "Invalid option: expected one of dashboard|timeline|page|kanban|form|table|chart",
     "code": "invalid_value"
   }],
   "docs": "https://agent-canvas-eta.vercel.app"
 }
 ```
 
-### Tech Stack
-
-Next.js · shadcn/ui · Supabase · Zod · Tailwind CSS · TypeScript
-
 ---
 
-## 🇨🇳 中文
+## Tech Stack
 
-### Agent 集成说明
-
-**1. 注册**
-```bash
-curl -X POST "https://agent-canvas-eta.vercel.app/api/auth/register" \
-  -H "Content-Type: application/json" \
-  -d '{"email": "my-agent@example.com", "password": "123"}'
-```
-返回 userId + token，保存好。
-
-**2. 推送数据**
-```bash
-python3 agent-canvas.py push today dashboard "今日面板" \
-  --data '{"battery":85,"tasks":[{"title":"任务A","status":"TODO"}]}'
-```
-
-**3. 分享链接**
-用户打开链接即可查看。
-
-### CLI 使用
-
-```bash
-# 配置
-ac config --token <token> --user-id <userId>
-
-# 推送
-ac push today dashboard "标题" --data '{...}'
-ac push report page "报告" --content "# 内容"
-ac push timeline timeline "时间线" --data '{"items":[...]}'
-
-# 列出所有 Canvas
-ac list
-```
-
-### Slide 类型
-
-| 类型 | 用途 |
-|------|------|
-| dashboard | 任务面板 + 统计卡片 |
-| page | Markdown 报告/文档 |
-| timeline | 时间线/里程碑 |
-| kanban | 看板 |
-| form | 表单（开发中） |
+Next.js · shadcn/ui · Supabase · Zod · Recharts · Tailwind CSS · TypeScript
 
 ---
 

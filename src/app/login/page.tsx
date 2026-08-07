@@ -45,26 +45,26 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
-        <h1 className="text-xl font-bold">◆ AgentCanvas</h1>
-        <input className="w-full rounded-lg border bg-background px-4 py-2 text-sm" placeholder="Email" type="email" value={email}
+      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-3">
+        <h1 className="text-xl font-semibold tracking-tight mb-4">◆ AgentCanvas</h1>
+        <input className="w-full rounded-md border bg-card px-3.5 py-2 text-sm placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring outline-none transition" placeholder="Email" type="email" value={email}
           onChange={e => setEmail(e.target.value)} required />
-        <input className="w-full rounded-lg border bg-background px-4 py-2 text-sm" placeholder="Password" type="password" value={password}
+        <input className="w-full rounded-md border bg-card px-3.5 py-2 text-sm placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring outline-none transition" placeholder="Password" type="password" value={password}
           onChange={e => setPassword(e.target.value)} required />
         {mode === 'register' && (
           <>
-            <input className="w-full rounded-lg border bg-background px-4 py-2 text-sm" placeholder="Confirm password" type="password"
+            <input className="w-full rounded-md border bg-card px-3.5 py-2 text-sm placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring outline-none transition" placeholder="Confirm password" type="password"
               value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} required />
-            <input className="w-full rounded-lg border bg-background px-4 py-2 text-sm" placeholder="Username (optional)" value={username}
+            <input className="w-full rounded-md border bg-card px-3.5 py-2 text-sm placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring outline-none transition" placeholder="Username (optional)" value={username}
               onChange={e => setUsername(e.target.value)} />
           </>
         )}
-        <button className="w-full rounded-lg bg-foreground text-background py-2 text-sm font-medium flex items-center justify-center gap-2" type="submit" disabled={loading}>
+        <button className="w-full rounded-md bg-foreground text-background py-2 text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50" type="submit" disabled={loading}>
           {loading ? <span className="inline-block w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin" /> : null}
           {loading ? 'Please wait...' : mode === 'login' ? 'Login' : 'Register'}
         </button>
         <p className="text-xs text-center text-muted-foreground">
-          <button type="button" onClick={() => setMode(m => m === 'login' ? 'register' : 'login')} className="underline">
+          <button type="button" onClick={() => setMode(m => m === 'login' ? 'register' : 'login')} className="underline hover:text-foreground transition-colors">
             {mode === 'login' ? 'New identity? Register' : 'Already registered? Login'}
           </button>
         </p>
